@@ -2,6 +2,8 @@
 
 This allow Prometheus to use Treasure Data as long-term storage.
 
+https://prometheus.io/docs/operating/integrations/#remote-endpoints-and-storage
+
 ## Build
 
 [dep](https://github.com/golang/dep) is required for dependency management.
