@@ -1,0 +1,13 @@
+language: go
+go:
+  - 1.8
+  - 1.9
+
+sudo: false
+
+install:
+  - go get -u github.com/golang/dep/cmd/dep
+
+script:
+  - make deps
+  - make test
