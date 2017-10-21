@@ -73,7 +73,25 @@ type Client struct {
 	table  string
 }
 
+func checkTableExistence(c *td_client.TDClient, db string, table string) error {
+	retval := bytes.Buffer{}
+	gzip.NewWriter(&retval).Close()
+	empty := retval.Bytes()
+
+	_, err := c.Import(db, table, "msgpack.gz", (td_client.InMemoryBlob)(empty), "")
+	if apierr, ok := err.(*td_client.APIError); ok {
+		if apierr.Type == td_client.NotFoundError {
+			return fmt.Errorf("Table %s.%s does not exist on Treasure Data", db, table)
+		}
+	}
+	return err
+}
+
 func NewClient(logger log.Logger, cfg *Config) *Client {
+	if logger == nil {
+		logger = log.NewNopLogger()
+	}
+
 	if err := validateConfig(cfg); err != nil {
 		level.Error(logger).Log("msg", "Failed to parse td options", "err", err)
 		os.Exit(1)
@@ -82,7 +100,6 @@ func NewClient(logger log.Logger, cfg *Config) *Client {
 	settings := td_client.Settings{
 		ApiKey: cfg.apiKey,
 	}
-
 	if cfg.router != nil {
 		settings.Router = cfg.router
 	}
@@ -91,14 +108,14 @@ func NewClient(logger log.Logger, cfg *Config) *Client {
 	}
 
 	c, err := td_client.NewTDClient(settings)
-
 	if err != nil {
 		level.Error(logger).Log("err", err)
 		os.Exit(1)
 	}
 
-	if logger == nil {
-		logger = log.NewNopLogger()
+	if err = checkTableExistence(c, cfg.db, cfg.table); err != nil {
+		level.Error(logger).Log("err", err)
+		os.Exit(1)
 	}
 
 	// TODO: validate db, table

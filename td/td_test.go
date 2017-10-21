@@ -75,52 +75,52 @@ func TestClient(t *testing.T) {
 			if r.Header.Get("Authorization") != "TD1 "+apiKey {
 				t.Fatalf("Unexpected authorization header; expected %s, got %s", expectedAuthorizationHeader, r.Header.Get("Authorization"))
 			}
-			matched, err := regexp.MatchString(expectedPath, r.URL.Path)
-			if err != nil {
-				t.Fatalf("Error compiling path regexp; path: ", expectedPath)
-			}
-			if !matched {
-				t.Fatalf("Unexpected path; expected %s, got %s", expectedPath, r.URL.Path)
-			}
 
-			reader, _ := gzip.NewReader(r.Body)
-			b, err := ioutil.ReadAll(reader)
-			if err != nil {
-				t.Fatalf("Error read gzip: %v", err)
-			}
-			if err := reader.Close(); err != nil {
-				t.Fatalf("Reader.Close: %v", err)
-			}
+			if r.URL.Path == path.Join("/v3/table/import", db, table, "msgpack.gz") {
+				// table existence check called by NewClient
+				// TODO
+			} else if matched, _ := regexp.MatchString(expectedPath, r.URL.Path); matched {
+				reader, _ := gzip.NewReader(r.Body)
+				b, err := ioutil.ReadAll(reader)
+				if err != nil {
+					t.Fatalf("Error read gzip: %v", err)
+				}
+				if err := reader.Close(); err != nil {
+					t.Fatalf("Reader.Close: %v", err)
+				}
 
-			handle := codec.MsgpackHandle{}
-			decoder := codec.NewDecoderBytes(b, &handle)
-			for _, s := range samples {
-				r := map[string]interface{}{}
-				if err = decoder.Decode(r); err != nil {
-					t.Fatalf("Error decode: %v", err)
-				}
-				if r["time"].(uint64) != uint64(s.Timestamp.Unix()) {
-					t.Fatalf("Error time, expected: %d, got: %d", uint64(s.Timestamp.Unix()), r["time"].(uint64))
-				}
-				if string(r["name"].([]byte)) != string(s.Metric[model.MetricNameLabel]) {
-					t.Fatalf("Error name, expected: %s, got: %s", string(s.Metric[model.MetricNameLabel]), string(r["name"].([]byte)))
-				}
-				for l, v := range s.Metric {
-					if l != model.MetricNameLabel {
-						if string(r["label_"+string(l)].([]byte)) != string(v) {
-							t.Fatalf("Error label, expected", string(v), string(r["label_"+string(l)].([]byte)))
+				handle := codec.MsgpackHandle{}
+				decoder := codec.NewDecoderBytes(b, &handle)
+				for _, s := range samples {
+					r := map[string]interface{}{}
+					if err = decoder.Decode(r); err != nil {
+						t.Fatalf("Error decode: %v", err)
+					}
+					if r["time"].(uint64) != uint64(s.Timestamp.Unix()) {
+						t.Fatalf("Error time, expected: %d, got: %d", uint64(s.Timestamp.Unix()), r["time"].(uint64))
+					}
+					if string(r["name"].([]byte)) != string(s.Metric[model.MetricNameLabel]) {
+						t.Fatalf("Error name, expected: %s, got: %s", string(s.Metric[model.MetricNameLabel]), string(r["name"].([]byte)))
+					}
+					for l, v := range s.Metric {
+						if l != model.MetricNameLabel {
+							if string(r["label_"+string(l)].([]byte)) != string(v) {
+								t.Fatalf("Error label, expected", string(v), string(r["label_"+string(l)].([]byte)))
+							}
+						}
+					}
+					if math.IsNaN(float64(s.Value)) {
+						if !math.IsNaN(r["value"].(float64)) {
+							t.Fatalf("Error value, expected: %f, got: %f", float64(s.Value), r["value"].(float64))
+						}
+					} else {
+						if r["value"].(float64) != float64(s.Value) {
+							t.Fatalf("Error value, expected: %f, got: %f", float64(s.Value), r["value"].(float64))
 						}
 					}
 				}
-				if math.IsNaN(float64(s.Value)) {
-					if !math.IsNaN(r["value"].(float64)) {
-						t.Fatalf("Error value, expected: %f, got: %f", float64(s.Value), r["value"].(float64))
-					}
-				} else {
-					if r["value"].(float64) != float64(s.Value) {
-						t.Fatalf("Error value, expected: %f, got: %f", float64(s.Value), r["value"].(float64))
-					}
-				}
+			} else {
+				t.Fatalf("Unexpected path; expected %s, got %s", expectedPath, r.URL.Path)
 			}
 
 			fmt.Fprint(w, `{"unique_id": "", "database": "", "table": "", "md5_hex": "", "elapsed_time": 1.0}`)
