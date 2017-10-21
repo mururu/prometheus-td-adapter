@@ -19,7 +19,7 @@ $ make
 $ ./prometheus-td-adapter -td.apikey=yourapikey -td.db=yourdb -td.table=yourtable
 ```
 
-You can pass the td related parameters by environment variables: `TD_APIKEY`, `TD_DB` and `TD_TABLE`.
+You can pass the td related parameters via environment variables: `TD_APIKEY`, `TD_DB` and `TD_TABLE`.
 
 For other options, see ` ./prometheus-td-adapter -h`.
 
