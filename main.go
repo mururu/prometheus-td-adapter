@@ -19,9 +19,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
 	"sync"
 	"time"
 
@@ -38,6 +40,9 @@ import (
 
 	"github.com/prometheus/prometheus/prompb"
 )
+
+// assigned at link time
+var version string
 
 type config struct {
 	logLevel      string
@@ -111,7 +116,14 @@ func parseFlags() *config {
 
 	flag.StringVar(&cfg.logLevel, promlogflag.LevelFlagName, "info", promlogflag.LevelFlagHelp)
 
+	v := flag.Bool("v", false, "The version of prometheus-td-adapter")
+
 	flag.Parse()
+
+	if *v {
+		fmt.Println("prometheus-td-adapter:", version)
+		os.Exit(0)
+	}
 
 	return cfg
 }

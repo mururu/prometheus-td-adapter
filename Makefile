@@ -1,11 +1,12 @@
-.PHONY: all deps clean
+TARGET := prometheus-td-adapter
+VERSION := 0.1.0
 
-TARGET=prometheus-td-adapter
+.PHONY: all deps clean
 
 all: $(TARGET)
 
 $(TARGET):
-	go build -o $@ main.go
+	go build -ldflags "-X main.version=$(VERSION)" -o $@ main.go
 
 deps:
 	dep ensure
