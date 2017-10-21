@@ -44,7 +44,7 @@ Metrics is stored in Treasure Data as below.
 ```
 {
   "time": 1508050569,
-  "value": 802713,
+  "value": 802713.0,
   "name": "node_network_transmit_packets",
   "label_job": "prometheus",
   "label_instance": "localhost:9100",
