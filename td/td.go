@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-kit/kit/log"
@@ -34,6 +35,19 @@ func ParseFlags(cfg *Config) *Config {
 	flag.StringVar(&cfg.apiKey, "td.apikey", "", "The API Key for Treasure Data")
 	flag.StringVar(&cfg.db, "td.db", "", "The Database Name for Treasure Data")
 	flag.StringVar(&cfg.table, "td.table", "", "The Table Name for Treasure Data")
+
+	// Enable set config via enviroment variables
+	flag.VisitAll(func(f *flag.Flag) {
+		keys := []string{"td.apikey", "td.db", "td.table"}
+		for _, key := range keys {
+			if f.Name == key {
+				env := strings.Replace(strings.ToUpper(key), ".", "_", -1)
+				if s := os.Getenv(env); s != "" {
+					f.Value.Set(s)
+				}
+			}
+		}
+	})
 	return cfg
 }
 
