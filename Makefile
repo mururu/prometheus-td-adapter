@@ -10,5 +10,8 @@ $(TARGET):
 deps:
 	dep ensure
 
+test:
+	go test -v ./td
+
 clean:
 	rm -f $(TARGET)

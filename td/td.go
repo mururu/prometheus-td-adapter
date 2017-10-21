@@ -26,6 +26,8 @@ type Config struct {
 	apiKey string
 	db     string
 	table  string
+	router td_client.EndpointRouter // for test
+	port   int                      // for test
 }
 
 func ParseFlags(cfg *Config) *Config {
@@ -63,9 +65,18 @@ func NewClient(logger log.Logger, cfg *Config) *Client {
 		os.Exit(1)
 	}
 
-	c, err := td_client.NewTDClient(td_client.Settings{
+	settings := td_client.Settings{
 		ApiKey: cfg.apiKey,
-	})
+	}
+
+	if cfg.router != nil {
+		settings.Router = cfg.router
+	}
+	if cfg.port != 0 {
+		settings.Port = cfg.port
+	}
+
+	c, err := td_client.NewTDClient(settings)
 
 	if err != nil {
 		level.Error(logger).Log("err", err)
